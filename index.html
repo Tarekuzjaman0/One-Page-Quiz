@@ -103,11 +103,11 @@
                         questionElement.classList.add("answered");
                         document.querySelectorAll(`[data-question-id='${index + 1}'] .option`).forEach(opt => opt.disabled = true);
                         
+                        // Check for correct answer only, and update score accordingly
                         if (this.dataset.correct === "true") {
                             score++;
                             this.classList.add("bg-green-400");
                         } else {
-                            score -= 0.5;
                             this.classList.add("bg-red-400");
                             questionElement.querySelector("[data-correct='true']").classList.add("bg-green-400");
                         }
