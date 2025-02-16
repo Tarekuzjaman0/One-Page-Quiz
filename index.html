@@ -9,12 +9,22 @@
     <script type="text/javascript" async src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
     <script type="text/javascript" async id="MathJax-script"
         src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-
+    <style>
+        .fixed-toolbar {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background-color: #fff;
+            padding: 10px 0;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+    </style>
 </head>
 
-<body class="bg-gray-100 p-2">
+<body class="bg-gray-100 p-1">
     <div class="max-w-xl mx-auto bg-white p-2 rounded-lg shadow-lg">
-        <div class="flex justify-between items-center mb-4">
+        <!-- Fixed Toolbar -->
+        <div class="fixed-toolbar flex justify-between items-center mb-4">
             <span class="text-lg font-normal">স্কোর: <span id="score">0</span></span>
             <span class="text-lg font-normal">সময়: <span id="timer">30:00</span></span>
             <button id="toggleMode" class="bg-blue-500 text-white px-4 py-2 rounded">রিডিং মোড</button>
@@ -77,52 +87,51 @@
         });
 
         function loadQuiz() {
-    fetch("questions.json")
-        .then(response => response.json())
-        .then(questions => {
-            quizContainer.innerHTML = "";
-            questions.forEach((q, index) => {
-                const questionElement = document.createElement("div");
-                questionElement.classList.add("mb-4");
-                questionElement.dataset.questionId = index + 1;
-                
-                const questionText = document.createElement("p");
-                questionText.classList.add("text-lg", "font-semibold");
-                questionText.innerHTML = `${index + 1}. ${q.question}`;
-                
-                questionElement.appendChild(questionText);
-                
-                q.options.forEach((option, i) => {
-                    const optionBtn = document.createElement("button");
-                    optionBtn.classList.add("option", "bg-gray-200", "p-2", "rounded", "w-full", "mt-2");
-                    optionBtn.innerHTML = option;
-                    optionBtn.dataset.correct = i === q.correctAnswerIndex;
-                    
-                    optionBtn.addEventListener("click", function () {
-                        if (questionElement.classList.contains("answered")) return;
-                        questionElement.classList.add("answered");
-                        document.querySelectorAll(`[data-question-id='${index + 1}'] .option`).forEach(opt => opt.disabled = true);
-                        
-                        // Check for correct answer only, and update score accordingly
-                        if (this.dataset.correct === "true") {
-                            score++;
-                            this.classList.add("bg-green-400");
-                        } else {
-                            this.classList.add("bg-red-400");
-                            questionElement.querySelector("[data-correct='true']").classList.add("bg-green-400");
-                        }
-                        scoreDisplay.textContent = score;
+            fetch("questions.json")
+                .then(response => response.json())
+                .then(questions => {
+                    quizContainer.innerHTML = "";
+                    questions.forEach((q, index) => {
+                        const questionElement = document.createElement("div");
+                        questionElement.classList.add("mb-4");
+                        questionElement.dataset.questionId = index + 1;
+
+                        const questionText = document.createElement("p");
+                        questionText.classList.add("text-lg", "font-semibold");
+                        questionText.innerHTML = `${index + 1}. ${q.question}`;
+
+                        questionElement.appendChild(questionText);
+
+                        q.options.forEach((option, i) => {
+                            const optionBtn = document.createElement("button");
+                            optionBtn.classList.add("option", "bg-gray-200", "p-2", "rounded", "w-full", "mt-2");
+                            optionBtn.innerHTML = option;
+                            optionBtn.dataset.correct = i === q.correctAnswerIndex;
+
+                            optionBtn.addEventListener("click", function () {
+                                if (questionElement.classList.contains("answered")) return;
+                                questionElement.classList.add("answered");
+                                document.querySelectorAll(`[data-question-id='${index + 1}'] .option`).forEach(opt => opt.disabled = true);
+
+                                // Check for correct answer only, and update score accordingly
+                                if (this.dataset.correct === "true") {
+                                    score++;
+                                    this.classList.add("bg-green-400");
+                                } else {
+                                    this.classList.add("bg-red-400");
+                                    questionElement.querySelector("[data-correct='true']").classList.add("bg-green-400");
+                                }
+                                scoreDisplay.textContent = score;
+                            });
+                            questionElement.appendChild(optionBtn);
+                        });
+                        quizContainer.appendChild(questionElement);
                     });
-                    questionElement.appendChild(optionBtn);
+
+                    // MathJax কে নতুন প্রশ্নগুলোর জন্য রেন্ডার করানো
+                    MathJax.typeset();
                 });
-                quizContainer.appendChild(questionElement);
-            });
-
-            // MathJax কে নতুন প্রশ্নগুলোর জন্য রেন্ডার করানো
-            MathJax.typeset();
-        });
-}
-
+        }
 
         loadQuiz();
         timer = setInterval(updateTimer, 1000);
