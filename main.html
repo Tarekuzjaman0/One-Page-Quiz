@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="bn">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>কুইজ সিস্টেম</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script type="text/javascript" async src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script type="text/javascript" async id="MathJax-script"
+        src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+</head>
+
+<body class="bg-gray-100 p-6">
+    <div class="max-w-xl mx-auto bg-white p-6 rounded-lg shadow-lg">
+        <div class="flex justify-between items-center mb-4">
+            <span class="text-lg font-bold">স্কোর: <span id="score">0</span></span>
+            <span class="text-lg font-bold">সময়: <span id="timer">30:00</span></span>
+            <button id="toggleMode" class="bg-blue-500 text-white px-4 py-2 rounded">রিডিং মোড</button>
+        </div>
+
+        <div id="quizContainer"></div>
+    </div>
+
+    <script>
+        let score = 0;
+        let timer;
+        let timeLeft = 1800;
+        let readingMode = false;
+
+        const scoreDisplay = document.getElementById("score");
+        const timerDisplay = document.getElementById("timer");
+        const toggleModeBtn = document.getElementById("toggleMode");
+        const quizContainer = document.getElementById("quizContainer");
+
+        function updateTimer() {
+            if (timeLeft <= 0) {
+                clearInterval(timer);
+                alert("সময় শেষ! সঠিক উত্তর দেখানো হচ্ছে।");
+                showCorrectAnswers();
+                return;
+            }
+            timeLeft--;
+            let minutes = Math.floor(timeLeft / 60);
+            let seconds = timeLeft % 60;
+            timerDisplay.textContent = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+        }
+
+        function showCorrectAnswers() {
+            document.querySelectorAll("[data-correct='true']").forEach(option => {
+                option.classList.add("bg-green-400");
+            });
+        }
+
+        function resetQuizMode() {
+            document.querySelectorAll(".option").forEach(option => {
+                option.disabled = false;
+                option.classList.remove("bg-green-400", "bg-red-400");
+            });
+        }
+
+        toggleModeBtn.addEventListener("click", () => {
+            readingMode = !readingMode;
+            toggleModeBtn.textContent = readingMode ? "কুইজ মোড" : "রিডিং মোড";
+
+            if (readingMode) {
+                clearInterval(timer);
+                showCorrectAnswers();
+                document.querySelectorAll(".option").forEach(option => option.disabled = true);
+            } else {
+                resetQuizMode();
+                timeLeft = 1800;
+                timer = setInterval(updateTimer, 1000);
+                document.querySelectorAll(".option").forEach(option => option.disabled = false);
+            }
+        });
+
+        function loadQuiz() {
+    fetch("questions.json")
+        .then(response => response.json())
+        .then(questions => {
+            quizContainer.innerHTML = "";
+            questions.forEach((q, index) => {
+                const questionElement = document.createElement("div");
+                questionElement.classList.add("mb-4");
+                questionElement.dataset.questionId = index + 1;
+                
+                const questionText = document.createElement("p");
+                questionText.classList.add("text-lg", "font-semibold");
+                questionText.innerHTML = `${index + 1}. ${q.question}`;
+                
+                questionElement.appendChild(questionText);
+                
+                q.options.forEach((option, i) => {
+                    const optionBtn = document.createElement("button");
+                    optionBtn.classList.add("option", "bg-gray-200", "p-2", "rounded", "w-full", "mt-2");
+                    optionBtn.innerHTML = option;
+                    optionBtn.dataset.correct = i === q.correctAnswerIndex;
+                    
+                    optionBtn.addEventListener("click", function () {
+                        if (questionElement.classList.contains("answered")) return;
+                        questionElement.classList.add("answered");
+                        document.querySelectorAll(`[data-question-id='${index + 1}'] .option`).forEach(opt => opt.disabled = true);
+                        
+                        if (this.dataset.correct === "true") {
+                            score++;
+                            this.classList.add("bg-green-400");
+                        } else {
+                            score -= 0.5;
+                            this.classList.add("bg-red-400");
+                            questionElement.querySelector("[data-correct='true']").classList.add("bg-green-400");
+                        }
+                        scoreDisplay.textContent = score;
+                    });
+                    questionElement.appendChild(optionBtn);
+                });
+                quizContainer.appendChild(questionElement);
+            });
+
+            // MathJax কে নতুন প্রশ্নগুলোর জন্য রেন্ডার করানো
+            MathJax.typeset();
+        });
+}
+
+
+        loadQuiz();
+        timer = setInterval(updateTimer, 1000);
+    </script>
+</body>
+
+</html>
